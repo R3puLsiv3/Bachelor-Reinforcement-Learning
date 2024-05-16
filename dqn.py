@@ -13,7 +13,7 @@ class DQN:
         self.target_model = self.create_model()
         self.target_model.set_weights(self.main_model.get_weights())
 
-        self.target_update_delta = 0
+        self.target_main_delta = 0
 
     def create_model(self):
         model = Sequential()
@@ -26,5 +26,15 @@ class DQN:
 
         return model
 
-    def query(self, state):
-        self.main_model.predict(np.array(state))
+    def query_main(self, states):
+        self.main_model.predict(np.array(states))
+
+    def query_target(self, states):
+        self.target_model.predict(np.array(states))
+
+    def update_target(self):
+        self.target_model.set_weights(self.main_model.get_weights())
+        self.target_main_delta = 0
+
+    def fit_main(self, X, y, batch_size):
+        self.main_model.fit(np.array(X), np.array(y), batch_size=batch_size, verbose=0, shuffle=False)
