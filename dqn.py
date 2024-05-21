@@ -1,6 +1,6 @@
 import numpy as np
 
-from tensorflow.keras.models import Sequential
+from tensorflow.keras import Sequential, Input
 from tensorflow.keras.layers import Dense
 
 
@@ -18,7 +18,8 @@ class DQN:
     def create_model(self):
         model = Sequential()
 
-        model.add(Dense(16, input_dim=self.state_dim, activation="relu"))
+        model.add(Input(shape=self.state_dim))
+        model.add(Dense(16,  activation="relu"))
         model.add(Dense(16, activation="relu"))
         model.add(Dense(self.action_dim, activation="linear"))
 
