@@ -4,7 +4,6 @@ import numpy as np
 class SumTree:
     # Adapted from https://github.com/MorvanZhou/Reinforcement-learning-with-tensorflow/blob/master/contents/5
     # .2_Prioritized_Replay_DQN/RL_brain.py
-    # and https://github.com/Howuhh/prioritized_experience_replay/blob/main/memory/tree.py
 
     def __init__(self, size):
         self.size = size
@@ -12,6 +11,7 @@ class SumTree:
         # Create binary tree with (size - 1) nodes and size leaves
         self.tree = np.zeros(self.tree_size)
         self.replay_buffer = np.zeros(size)
+        self.max_priority = 1.
 
         # Keep track of position for adding new data
         self.data_pointer = 0
@@ -20,6 +20,7 @@ class SumTree:
         self.replay_buffer[self.data_pointer] = transition
         # Find corresponding position in tree and update tree
         tree_pointer = self.data_pointer + self.size - 1
+
         self.update(tree_pointer, prio)
 
         self.data_pointer = (self.data_pointer + 1) % self.size
@@ -27,6 +28,7 @@ class SumTree:
     def update(self, tree_pointer, prio):
         old_prio = self.tree[tree_pointer]
         difference = prio - old_prio
+        self.tree[tree_pointer] = prio
         # Propagate priority difference through the tree
         while tree_pointer != 0:
             tree_pointer = (tree_pointer - 1) // 2
