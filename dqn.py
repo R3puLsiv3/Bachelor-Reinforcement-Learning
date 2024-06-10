@@ -1,41 +1,59 @@
-import tensorflow as tf
+import torch
+import torch.nn as nn
+import torch.optim as optim
 
-from tensorflow.keras import Sequential, Input
-from tensorflow.keras.layers import Dense
+from copy import deepcopy
+from utils import device
 
 
 class DQN:
-    def __init__(self, state_size, action_size):
-        self.state_size = state_size
-        self.action_size = action_size
+    def __init__(self, state_size, action_size, gamma, tau, lr):
+        self.model = nn.Sequential(
+            nn.Linear(state_size, 32),
+            nn.ReLU(),
+            nn.Linear(32, 32),
+            nn.ReLU(),
+            nn.Linear(32, action_size)
+        ).to(device())
+        self.target_model = deepcopy(self.model).to(device())
+        self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
 
-        self.main_model = self.create_model()
-        self.target_model = self.create_model()
-        self.target_model.set_weights(self.main_model.get_weights())
+        self.gamma = gamma
+        self.tau = tau
 
-        self.target_main_delta = 0
+    def soft_update(self, target, source):
+        for tp, sp in zip(target.parameters(), source.parameters()):
+            tp.data.copy_((1 - self.tau) * tp.data + self.tau * sp.data)
 
-    def create_model(self):
-        model = Sequential()
+    def act(self, state):
+        with torch.no_grad():
+            state = torch.as_tensor(state, dtype=torch.float).to(device())
+            action = torch.argmax(self.model(state)).cpu().numpy().item()
+        return action
 
-        model.add(Input(shape=(self.state_size, )))
-        model.add(Dense(128, activation="relu"))
-        model.add(Dense(128, activation="relu"))
-        model.add(Dense(self.action_size, activation="linear"))
+    def update(self, batch, weights=None):
+        state, action, reward, next_state, done = batch
 
-        model.compile(optimizer="adam", loss="mean_squared_error")
+        Q_next = self.target_model(next_state).max(dim=1).values
+        Q_target = reward + self.gamma * (1 - done) * Q_next
+        Q = self.model(state)[torch.arange(len(action)), action.to(torch.long).flatten()]
 
-        return model
+        assert Q.shape == Q_target.shape, f"{Q.shape}, {Q_target.shape}"
 
-    def query_main(self, states):
-        return self.main_model(tf.convert_to_tensor(states), training=False)
+        if weights is None:
+            weights = torch.ones_like(Q)
 
-    def query_target(self, states):
-        return self.target_model(tf.convert_to_tensor(states), training=False)
+        td_error = torch.abs(Q - Q_target).detach()
+        loss = torch.mean((Q - Q_target) ** 2 * weights)
 
-    def update_target(self):
-        self.target_model.set_weights(self.main_model.get_weights())
-        self.target_main_delta = 0
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
 
-    def fit_main(self, x, y):
-        self.main_model.train_on_batch(tf.convert_to_tensor(x), tf.convert_to_tensor(y))
+        with torch.no_grad():
+            self.soft_update(self.target_model, self.model)
+
+        return loss.item(), td_error
+
+    def save(self):
+        torch.save(self.model, "agent.pkl")

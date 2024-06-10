@@ -1,64 +1,51 @@
-import numpy as np
-
 
 class SumTree:
-    # Adapted from https://github.com/MorvanZhou/Reinforcement-learning-with-tensorflow/blob/master/contents/5
-    # .2_Prioritized_Replay_DQN/RL_brain.py
-
     def __init__(self, size):
+        self.nodes = [0] * (2 * size - 1)
+        self.data = [None] * size
+
         self.size = size
-        self.tree_size = 2 * self.size - 1
-        # Create binary tree with (size - 1) nodes and size leaves
-        self.tree = np.zeros(self.tree_size)
-        self.replay_buffer = np.zeros(size)
-        self.max_priority = 1.
+        self.count = 0
+        self.real_size = 0
 
-        # Keep track of position for adding new data
-        self.data_pointer = 0
+    @property
+    def total(self):
+        return self.nodes[0]
 
-    def add(self, prio, transition):
-        self.replay_buffer[self.data_pointer] = transition
-        # Find corresponding position in tree and update tree
-        tree_pointer = self.data_pointer + self.size - 1
+    def update(self, data_idx, value):
+        idx = data_idx + self.size - 1  # child index in tree array
+        change = value - self.nodes[idx]
 
-        self.update(tree_pointer, prio)
+        self.nodes[idx] = value
 
-        self.data_pointer = (self.data_pointer + 1) % self.size
+        parent = (idx - 1) // 2
+        while parent >= 0:
+            self.nodes[parent] += change
+            parent = (parent - 1) // 2
 
-    def update(self, tree_pointer, prio):
-        old_prio = self.tree[tree_pointer]
-        difference = prio - old_prio
-        self.tree[tree_pointer] = prio
-        # Propagate priority difference through the tree
-        while tree_pointer != 0:
-            tree_pointer = (tree_pointer - 1) // 2
-            self.tree[tree_pointer] += difference
+    def add(self, value, data):
+        self.data[self.count] = data
+        self.update(self.count, value)
 
-    def retrieve(self, cum_sum):
-        parent_pos = 0
-        while True:
-            child_left_pos = 2 * parent_pos + 1
-            child_right_pos = child_left_pos + 1
+        self.count = (self.count + 1) % self.size
+        self.real_size = min(self.size, self.real_size + 1)
 
-            # In case leaf depth is reached
-            if child_left_pos >= self.tree_size:
-                leaf_pos = parent_pos
-                break
-            # Keep searching for higher priority nodes
+    def get(self, cum_sum):
+        assert cum_sum <= self.total
+
+        idx = 0
+        while 2 * idx + 1 < len(self.nodes):
+            left, right = 2*idx + 1, 2*idx + 2
+
+            if cum_sum <= self.nodes[left]:
+                idx = left
             else:
-                if cum_sum <= self.tree[child_left_pos]:
-                    parent_pos = child_left_pos
-                else:
-                    cum_sum -= self.tree[child_left_pos]
-                    parent_pos = child_right_pos
+                idx = right
+                cum_sum = cum_sum - self.nodes[left]
 
-        data_pos = leaf_pos - self.size + 1
-        return leaf_pos, self.tree[leaf_pos], self.replay_buffer[data_pos]
+        data_idx = idx - self.size + 1
 
-    def total_prio(self):
-        return self.tree[0]
+        return data_idx, self.nodes[idx], self.data[data_idx]
 
-
-
-
-
+    def __repr__(self):
+        return f"SumTree(nodes={self.nodes.__repr__()}, data={self.data.__repr__()})"

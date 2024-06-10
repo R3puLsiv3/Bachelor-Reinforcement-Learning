@@ -1,45 +1,75 @@
-import gymnasium as gym
+import torch
+import matplotlib.pyplot as plt
+import numpy as np
 
 from agent import Agent
+from memory import UniformMemory, PrioritizedExperienceReplayMemory
+from dqn import DQN
 
 
 def main():
-    env = gym.make('MountainCar-v0')
-    state_size = env.observation_space.shape[0]
-    action_size = env.action_space.n
+    n_seeds = 10
 
+    # Training parameters
+    env_name = "CartPole-v0"
+    timesteps = 50_000
     batch_size = 64
-    memory_size = 20_000
-    epsilon = 1
-    min_epsilon = 0.01
-    epsilon_decay = 0.999
-    discount = 0.97
-    target_update = 2_000
+    test_every = 5000
+    eps_max = 0.5
+    eps_min = 0.05
 
-    agent = Agent(state_size, action_size, batch_size, memory_size, epsilon, min_epsilon, epsilon_decay, discount,
-                  target_update)
+    # Model parameters
+    model_state_size = 4
+    model_action_size = 2
+    gamma = 0.99
+    tau = 0.01
+    lr = 1e-4
 
-    num_episodes = 5_000
+    # Memory parameters
+    memory_state_size = 4
+    memory_action_size = 1
+    memory_size = 50_000
+    eps = 1e-2
+    alpha = 0.7
+    beta = 0.4
 
-    for episode in range(num_episodes):
-        state = env.reset()[0]
-        terminated = False
-        truncated = False
-        sum_reward = 0
-        while not (terminated or truncated):
-            action = agent.choose_action(state)
+    agent = Agent(env_name, timesteps, batch_size, test_every, eps_max, eps_min)
 
-            next_state, reward, terminated, truncated, _ = env.step(action)
-            sum_reward += reward
+    # Training on uniform memory
+    torch.manual_seed(0)
+    mean_rewards = []
+    for seed in range(n_seeds):
+        memory = UniformMemory(memory_state_size, memory_action_size, memory_size)
+        model = DQN(model_state_size, model_action_size, gamma, tau, lr)
+        seed_reward, seed_std = agent.train(seed=seed, model=model, memory=memory)
+        mean_rewards.append(seed_reward)
+    mean_rewards = np.array(mean_rewards)
+    mean_reward, std_reward = mean_rewards.mean(axis=0), mean_rewards.std(axis=0)
 
-            agent.memory.add(state, action, reward, next_state, terminated or truncated)
-            state = next_state
+    # Training on prioritized memory
+    torch.manual_seed(0)
+    mean_rewards = []
+    for seed in range(n_seeds):
+        memory = PrioritizedExperienceReplayMemory(memory_state_size, memory_action_size, memory_size, eps, alpha, beta)
+        model = DQN(model_state_size, model_action_size, gamma, tau, lr)
+        seed_reward, seed_std = agent.train(seed=seed, model=model, memory=memory)
+        mean_rewards.append(seed_reward)
+    mean_rewards = np.array(mean_rewards)
+    mean_priority_reward, std_priority_reward = mean_rewards.mean(axis=0), mean_rewards.std(axis=0)
 
-            agent.train()
+    steps = np.arange(mean_reward.shape[0]) * test_every
 
-        print(f"Episode {episode}: Success = {terminated}, Reward = {sum_reward}")
+    plt.plot(steps, mean_reward, label="Uniform")
+    plt.fill_between(steps, mean_reward - std_reward, mean_reward + std_reward, alpha=0.4)
+    plt.plot(steps, mean_priority_reward, label="Prioritized")
+    plt.fill_between(steps, mean_priority_reward - std_priority_reward, mean_priority_reward + std_priority_reward,
+                     alpha=0.4)
 
-        agent.decay_epsilon()
+    plt.legend()
+    plt.title(env_name)
+    plt.xlabel("Transitions")
+    plt.ylabel("Reward")
+    plt.savefig(f"{env_name}.jpg", dpi=200, bbox_inches='tight')
 
 
 if __name__ == "__main__":
