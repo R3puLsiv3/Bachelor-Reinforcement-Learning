@@ -2,16 +2,16 @@ import torch
 import matplotlib.pyplot as plt
 import numpy as np
 
-from agent import Agent
+from agent import DQNAgent, PPOAgent
 from memory import UniformMemory, PrioritizedExperienceReplayMemory
-from dqn import DQN
+from model import DQN, ActorCritic
 
 
 def main():
     n_seeds = 10
 
     # Training parameters
-    env_name = "CartPole-v0"
+    env_name = "CartPole-v1"
     timesteps = 50_000
     batch_size = 64
     test_every = 5000
@@ -33,7 +33,7 @@ def main():
     alpha = 0.7
     beta = 0.4
 
-    agent = Agent(env_name, timesteps, batch_size, test_every, eps_max, eps_min)
+    agent = DQNAgent(env_name, timesteps, batch_size, test_every, eps_max, eps_min)
 
     # Training on uniform memory
     torch.manual_seed(0)
@@ -57,13 +57,24 @@ def main():
     mean_rewards = np.array(mean_rewards)
     mean_priority_reward, std_priority_reward = mean_rewards.mean(axis=0), mean_rewards.std(axis=0)
 
+    agent = PPOAgent(env_name)
+
+    # PPO training
+    torch.manual_seed(0)
+    mean_rewards = []
+    for seed in range(n_seeds):
+        model = ActorCritic(model_state_size, model_action_size, lr)
+        seed_reward, seed_std = agent.train(seed=seed, model=model)
+        mean_rewards.append(seed_reward)
+    mean_rewards = np.array(mean_rewards)
+    mean_ppo_reward, std_ppo_reward = mean_rewards.mean(axis=0), mean_rewards.std(axis=0)
+
     steps = np.arange(mean_reward.shape[0]) * test_every
 
     plt.plot(steps, mean_reward, label="Uniform")
     plt.fill_between(steps, mean_reward - std_reward, mean_reward + std_reward, alpha=0.4)
     plt.plot(steps, mean_priority_reward, label="Prioritized")
-    plt.fill_between(steps, mean_priority_reward - std_priority_reward, mean_priority_reward + std_priority_reward,
-                     alpha=0.4)
+    plt.fill_between(steps, mean_priority_reward - std_priority_reward, mean_priority_reward + std_priority_reward, alpha=0.4)
 
     plt.legend()
     plt.title(env_name)

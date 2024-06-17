@@ -4,6 +4,7 @@ import torch.optim as optim
 
 from copy import deepcopy
 from utils import device
+from torch.distributions import Normal
 
 
 class DQN:
@@ -57,3 +58,42 @@ class DQN:
 
     def save(self):
         torch.save(self.model, "agent.pkl")
+
+
+def init_weights(m):
+    if isinstance(m, nn.Linear):
+        nn.init.normal_(m.weight, mean=0., std=0.1)
+        nn.init.constant_(m.bias, 0.1)
+
+
+class ActorCritic(nn.Module):
+    def __init__(self, state_size, action_size, lr, std=0.0):
+        super(ActorCritic, self).__init__()
+
+        self.critic = nn.Sequential(
+            nn.Linear(state_size, 32),
+            nn.ReLU(),
+            nn.Linear(32, 32),
+            nn.ReLU(),
+            nn.Linear(32, action_size)
+        ).to(device())
+
+        self.actor = nn.Sequential(
+            nn.Linear(state_size, 32),
+            nn.ReLU(),
+            nn.Linear(32, 32),
+            nn.ReLU(),
+            nn.Linear(32, action_size)
+        ).to(device())
+
+        self.optimizer = optim.Adam(self.parameters(), lr=lr)
+        self.log_std = nn.Parameter(torch.ones(1, action_size) * std)
+
+        self.apply(init_weights)
+
+    def forward(self, x):
+        value = self.critic(x)
+        mu = self.actor(x)
+        std = self.log_std.exp().expand_as(mu)
+        dist = Normal(mu, std)
+        return dist, value
