@@ -11,7 +11,7 @@ def main():
     n_seeds = 10
 
     # Training parameters
-    env_name = "CartPole-v0"
+    env_name = "environment:house-v0"
     timesteps = 50_000
     batch_size = 64
     test_every = 5000
@@ -19,14 +19,14 @@ def main():
     eps_min = 0.05
 
     # Model parameters
-    model_state_size = 4
-    model_action_size = 2
+    model_state_size = 3
+    model_action_size = 21
     gamma = 0.99
     tau = 0.01
     lr = 1e-4
 
     # Memory parameters
-    memory_state_size = 4
+    memory_state_size = 3
     memory_action_size = 1
     memory_size = 50_000
     eps = 1e-2
