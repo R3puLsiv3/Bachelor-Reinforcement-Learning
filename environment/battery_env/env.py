@@ -60,7 +60,7 @@ class Env(gym.Env):
 
     def calculate_new_soc(self, action):
         if action < 0.:
-            if self.soc - action < 0.:
+            if self.soc + action < 0.:
                 action = self.soc
             self.soc = max((self.soc - action), self.min_capacity)
         elif action > 0.:
