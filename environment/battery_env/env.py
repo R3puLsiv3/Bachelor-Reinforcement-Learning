@@ -21,10 +21,10 @@ class EnvBase(gym.Env):
 
         self.data_pointer = 0
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        self.data = pd.read_csv(dir_path + "/data/hourly_data.csv")
-        self.data_length = self.data.shape[0]
-        self.demand_grid = self.data["demand_grid"]
-        self.day_ahead_price = self.data["day_ahead_price"]
+        self.data = pd.read_csv(dir_path + "/Data_Base_Env_2021.csv")
+        self.data_length = self.data.shape[0] - 1
+        self.demand_grid = self.data["Grid Demand [W]"]
+        self.day_ahead_price = self.data["Day-ahead Price [EUR/MWh]"]
 
     def calculate_reward(self, old_soc):
         soc_delta = self.soc - old_soc

@@ -46,38 +46,38 @@ def main():
     mean_rewards = np.array(mean_rewards)
     mean_reward, std_reward = mean_rewards.mean(axis=0), mean_rewards.std(axis=0)
 
-    # Training on uniform memory with double DQN
-    torch.manual_seed(0)
-    mean_rewards = []
-    for seed in range(n_seeds):
-        memory = UniformMemory(memory_state_size, memory_action_size, memory_size)
-        model = DQN(model_state_size, model_action_size, gamma, tau, lr, double_dqn=True)
-        seed_reward, seed_std = agent.train(seed=seed, model=model, memory=memory)
-        mean_rewards.append(seed_reward)
-    mean_rewards = np.array(mean_rewards)
-    mean_reward_double, std_reward_double = mean_rewards.mean(axis=0), mean_rewards.std(axis=0)
+    # # Training on uniform memory with double DQN
+    # torch.manual_seed(0)
+    # mean_rewards = []
+    # for seed in range(n_seeds):
+    #     memory = UniformMemory(memory_state_size, memory_action_size, memory_size)
+    #     model = DQN(model_state_size, model_action_size, gamma, tau, lr, double_dqn=True)
+    #     seed_reward, seed_std = agent.train(seed=seed, model=model, memory=memory)
+    #     mean_rewards.append(seed_reward)
+    # mean_rewards = np.array(mean_rewards)
+    # mean_reward_double, std_reward_double = mean_rewards.mean(axis=0), mean_rewards.std(axis=0)
 
-    # Training on prioritized memory
-    torch.manual_seed(0)
-    mean_rewards = []
-    for seed in range(n_seeds):
-        memory = PrioritizedExperienceReplayMemory(memory_state_size, memory_action_size, memory_size, eps, alpha, beta)
-        model = DQN(model_state_size, model_action_size, gamma, tau, lr, double_dqn=False)
-        seed_reward, seed_std = agent.train(seed=seed, model=model, memory=memory)
-        mean_rewards.append(seed_reward)
-    mean_rewards = np.array(mean_rewards)
-    mean_priority_reward, std_priority_reward = mean_rewards.mean(axis=0), mean_rewards.std(axis=0)
-
-    # Training on prioritized memory with double DQN
-    torch.manual_seed(0)
-    mean_rewards = []
-    for seed in range(n_seeds):
-        memory = PrioritizedExperienceReplayMemory(memory_state_size, memory_action_size, memory_size, eps, alpha, beta)
-        model = DQN(model_state_size, model_action_size, gamma, tau, lr, double_dqn=True)
-        seed_reward, seed_std = agent.train(seed=seed, model=model, memory=memory)
-        mean_rewards.append(seed_reward)
-    mean_rewards = np.array(mean_rewards)
-    mean_priority_reward_double, std_priority_reward_double = mean_rewards.mean(axis=0), mean_rewards.std(axis=0)
+    # # Training on prioritized memory
+    # torch.manual_seed(0)
+    # mean_rewards = []
+    # for seed in range(n_seeds):
+    #     memory = PrioritizedExperienceReplayMemory(memory_state_size, memory_action_size, memory_size, eps, alpha, beta)
+    #     model = DQN(model_state_size, model_action_size, gamma, tau, lr, double_dqn=False)
+    #     seed_reward, seed_std = agent.train(seed=seed, model=model, memory=memory)
+    #     mean_rewards.append(seed_reward)
+    # mean_rewards = np.array(mean_rewards)
+    # mean_priority_reward, std_priority_reward = mean_rewards.mean(axis=0), mean_rewards.std(axis=0)
+    #
+    # # Training on prioritized memory with double DQN
+    # torch.manual_seed(0)
+    # mean_rewards = []
+    # for seed in range(n_seeds):
+    #     memory = PrioritizedExperienceReplayMemory(memory_state_size, memory_action_size, memory_size, eps, alpha, beta)
+    #     model = DQN(model_state_size, model_action_size, gamma, tau, lr, double_dqn=True)
+    #     seed_reward, seed_std = agent.train(seed=seed, model=model, memory=memory)
+    #     mean_rewards.append(seed_reward)
+    # mean_rewards = np.array(mean_rewards)
+    # mean_priority_reward_double, std_priority_reward_double = mean_rewards.mean(axis=0), mean_rewards.std(axis=0)
 
     # agent = PPOAgent(env_name)
 
@@ -95,12 +95,12 @@ def main():
 
     plt.plot(steps, mean_reward, label="Uniform")
     plt.fill_between(steps, mean_reward - std_reward, mean_reward + std_reward, alpha=0.4)
-    plt.plot(steps, mean_reward_double, label="Uniform DDQN")
-    plt.fill_between(steps, mean_reward_double - std_reward_double, mean_reward_double + std_reward_double, alpha=0.4)
-    plt.plot(steps, mean_priority_reward, label="Prioritized")
-    plt.fill_between(steps, mean_priority_reward - std_priority_reward, mean_priority_reward + std_priority_reward, alpha=0.4)
-    plt.plot(steps, mean_priority_reward_double, label="Prioritized DDQN")
-    plt.fill_between(steps, mean_priority_reward_double - std_priority_reward_double, mean_priority_reward_double + std_priority_reward_double, alpha=0.4)
+    # plt.plot(steps, mean_reward_double, label="Uniform DDQN")
+    # plt.fill_between(steps, mean_reward_double - std_reward_double, mean_reward_double + std_reward_double, alpha=0.4)
+    # plt.plot(steps, mean_priority_reward, label="Prioritized")
+    # plt.fill_between(steps, mean_priority_reward - std_priority_reward, mean_priority_reward + std_priority_reward, alpha=0.4)
+    # plt.plot(steps, mean_priority_reward_double, label="Prioritized DDQN")
+    # plt.fill_between(steps, mean_priority_reward_double - std_priority_reward_double, mean_priority_reward_double + std_priority_reward_double, alpha=0.4)
 
     plt.legend()
     plt.title(env_name)
