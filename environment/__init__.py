@@ -1,21 +1,21 @@
 from gymnasium.envs.registration import register
 
 register(
-    id='house-v0',
+    id='house_base',
     entry_point='environment.battery_env:EnvBase'
 )
 
 register(
-    id='house-v1',
+    id='house_timestamp',
     entry_point='environment.battery_env:EnvTimestamp'
 )
 
 register(
-    id='house-v2',
+    id='house_radiation',
     entry_point='environment.battery_env:EnvRadiation'
 )
 
 register(
-    id='house-v3',
+    id='house_timestamp_radiation',
     entry_point='environment.battery_env:EnvTimestampRadiation'
 )

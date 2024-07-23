@@ -8,13 +8,13 @@ from model import DQN, ActorCritic
 
 
 def main():
-    n_seeds = 10
+    n_seeds = 1
 
     # Training parameters
-    env_name = "environment:house-v0"
-    timesteps = 50_000
+    env_name = "environment:house_base"
+    timesteps = 100_000
     batch_size = 64
-    test_every = 5000
+    test_every = 10_000
     eps_max = 0.5
     eps_min = 0.05
 
@@ -104,8 +104,11 @@ def main():
 
     plt.legend()
     plt.title(env_name)
+    # plt.ylim()
     plt.xlabel("Transitions")
     plt.ylabel("Reward")
+    plt.show()
+
     plt.savefig(f"{env_name}.jpg", dpi=200, bbox_inches='tight')
 
 
