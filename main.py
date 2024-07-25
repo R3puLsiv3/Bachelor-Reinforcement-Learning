@@ -2,7 +2,7 @@ import torch
 import matplotlib.pyplot as plt
 import numpy as np
 
-from agent import DQNAgent, PPOAgent
+from agent import DQNAgent, BaseAgent, PPOAgent
 from memory import UniformMemory, PrioritizedExperienceReplayMemory
 from model import DQN, ActorCritic
 
@@ -12,18 +12,18 @@ def main():
 
     # Training parameters
     env_name = "environment:house_base"
-    timesteps = 100_000
+    timesteps = 50_000
     batch_size = 64
-    test_every = 10_000
-    eps_max = 0.5
+    test_every = 2_953
+    eps_max = 0.95
     eps_min = 0.05
 
     # Model parameters
     model_state_size = 3
     model_action_size = 21
-    gamma = 0.99
-    tau = 0.01
-    lr = 1e-4
+    gamma = 0.98
+    tau = 0.001
+    lr = 0.002
 
     # Memory parameters
     memory_state_size = 3
@@ -32,6 +32,10 @@ def main():
     eps = 1e-2
     alpha = 0.7
     beta = 0.4
+
+    agent = BaseAgent(env_name)
+    rewards = agent.train(0)
+    print(f"Baseline reward: {sum(rewards)}")
 
     agent = DQNAgent(env_name, timesteps, batch_size, test_every, eps_max, eps_min)
 
@@ -107,9 +111,9 @@ def main():
     # plt.ylim()
     plt.xlabel("Transitions")
     plt.ylabel("Reward")
-    plt.show()
 
     plt.savefig(f"{env_name}.jpg", dpi=200, bbox_inches='tight')
+    plt.show()
 
 
 if __name__ == "__main__":

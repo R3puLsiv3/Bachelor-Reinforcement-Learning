@@ -97,6 +97,66 @@ class DQNAgent:
         return np.array(rewards_total), np.array(stds_total)
 
 
+class BaseAgent:
+    def __init__(self, env_name):
+        self.env_name = env_name
+
+    def train(self, seed=0):
+
+        env = gym.make(self.env_name)
+
+        rewards = []
+
+        done = False
+        state, _ = env.reset(seed=seed)
+
+        while not done:
+            if done:
+                break
+
+            # Do not charge/discharge
+            action = 10
+
+            _, reward, terminated, truncated, _ = env.step(action)
+            done = terminated or truncated
+
+            rewards.append(reward)
+
+        return rewards
+
+
+class TestAgent:
+    def __init__(self, env_name):
+        self.env_name = env_name
+
+    def train(self, model, seed=0):
+
+        env = gym.make(self.env_name)
+
+        data = []
+
+        done = False
+        state, _ = env.reset(seed=seed)
+
+        while not done:
+            if done:
+                break
+
+            # Choose action from best model
+            action = model.act(state)
+
+            # Use empty info for additional information
+            next_state, reward, terminated, truncated, _ = env.step(action)
+            done = terminated or truncated
+
+            data_point = {"demand": state[0], "price": state[1], "soc": state[3], "action": action, "reward": reward}
+            data.append(data_point)
+
+            state = next_state
+
+        return data
+
+
 def compute_gae(next_value, rewards, masks, values, gamma=0.99, tau=0.95):
     values = values + [next_value]
     gae = 0

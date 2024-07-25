@@ -2,6 +2,7 @@ import gymnasium as gym
 import numpy as np
 import pandas as pd
 import os
+import random
 
 from gymnasium import spaces
 
@@ -16,16 +17,16 @@ class EnvBase(gym.Env):
 
         self.min_capacity = 0.
         self.max_capacity = 1.
-        self.soc = 1.
-        self.capacity = 50_000
+        self.soc = random.uniform(0.0, 1.0)
+        self.capacity = 50
 
         self.data_pointer = 0
         dir_path = os.path.dirname(os.path.realpath(__file__))
         self.data = pd.read_csv(dir_path + "/data/Data_Base_Env_2021.csv")
         self.data_length = self.data.shape[0] - 1
-        self.total_demand = self.data["Grid Demand [W]"]
-        self.pv_gen = self.data["PV Gen [W]"]
-        self.day_ahead_price = self.data["Day-ahead Price [EUR/MWh]"]
+        self.total_demand = self.data["Total Demand [kW]"]
+        self.pv_gen = self.data["PV Gen [kW]"]
+        self.day_ahead_price = self.data["Day-ahead Price [EUR/kWh]"]
 
     def calculate_reward(self, old_soc):
         soc_delta = self.soc - old_soc
@@ -37,7 +38,7 @@ class EnvBase(gym.Env):
             multiplier = 0.5
         else:
             multiplier = -1.
-        return min(self.day_ahead_price[self.data_pointer] * GRID_demand * multiplier / 1_000_000, 0)
+        return min(self.day_ahead_price[self.data_pointer] * GRID_demand * multiplier, 0)
 
     def step(self, action):
         self.data_pointer += 1
