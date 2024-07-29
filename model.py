@@ -10,11 +10,11 @@ from torch.distributions import Normal
 class DQN:
     def __init__(self, state_size, action_size, gamma, tau, lr, double_dqn):
         self.model = nn.Sequential(
-            nn.Linear(state_size, 256),
+            nn.Linear(state_size, 64),
             nn.ReLU(),
-            nn.Linear(256, 256),
+            nn.Linear(64, 128),
             nn.ReLU(),
-            nn.Linear(256, action_size)
+            nn.Linear(128, action_size)
         ).to(device())
         self.target_model = deepcopy(self.model).to(device())
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
@@ -58,7 +58,7 @@ class DQN:
         self.optimizer.zero_grad()
         loss.backward()
         # for param in self.model.parameters():
-        #    param.grad.data.clamp_(-1, 1)
+        #     param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
         with torch.no_grad():

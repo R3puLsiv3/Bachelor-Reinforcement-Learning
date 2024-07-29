@@ -12,18 +12,18 @@ def main():
 
     # Training parameters
     env_name = "environment:house_base"
-    timesteps = 50_000
+    timesteps = 15_000
     batch_size = 64
-    test_every = 2_953
-    eps_max = 0.95
-    eps_min = 0.05
+    test_every = 200
+    eps_max = 0.5
+    eps_min = 0.01
 
     # Model parameters
     model_state_size = 3
     model_action_size = 21
-    gamma = 0.98
-    tau = 0.001
-    lr = 0.002
+    gamma = 0.99
+    tau = 0.0001
+    lr = 0.0001
 
     # Memory parameters
     memory_state_size = 3

@@ -10,7 +10,7 @@ from gymnasium import spaces
 class EnvBase(gym.Env):
     def __init__(self):
         self.action_space = spaces.Discrete(21)
-        self.observation_space = spaces.Box(low=-1000000, high=1000000, shape=(3,), dtype=np.float64)
+        self.observation_space = spaces.Box(low=-100, high=100, shape=(3,), dtype=np.float64)
 
         self.actions = {0: -1., 1: -0.9, 2: -0.8, 3: -0.7, 4: -0.6, 5: -0.5, 6: -0.4, 7: -0.3, 8: -0.2, 9: -0.1, 10: 0.,
                         11: 0.1, 12: 0.2, 13: 0.3, 14: 0.4, 15: 0.5, 16: 0.6, 17: 0.7, 18: 0.8, 19: 0.9, 20: 1.}
@@ -23,7 +23,7 @@ class EnvBase(gym.Env):
         self.data_pointer = 0
         dir_path = os.path.dirname(os.path.realpath(__file__))
         self.data = pd.read_csv(dir_path + "/data/Data_Base_Env_2021.csv")
-        self.data_length = self.data.shape[0] - 1
+        self.data_length = self.data.shape[0] - 300
         self.total_demand = self.data["Total Demand [kW]"]
         self.pv_gen = self.data["PV Gen [kW]"]
         self.day_ahead_price = self.data["Day-ahead Price [EUR/kWh]"]
@@ -63,7 +63,7 @@ class EnvBase(gym.Env):
 
     def reset(self, seed=None, options=None):
         self.data_pointer = 0
-        self.soc = 1.
+        self.soc = random.uniform(0.0, 1.0)
         return np.asarray([self.total_demand[self.data_pointer], self.day_ahead_price[self.data_pointer], self.soc]), {}
 
     def render(self):

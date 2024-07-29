@@ -44,6 +44,7 @@ class DQNAgent:
 
         episodes = 0
         best_reward = -np.inf
+        eps = 1
 
         done = False
         state, _ = env.reset(seed=seed)
@@ -51,10 +52,11 @@ class DQNAgent:
         for step in range(1, self.timesteps + 1):
             if done:
                 done = False
-                state, _ = env.reset(seed=seed)
                 episodes += 1
+                state, _ = env.reset(seed=seed+episodes)
 
-            eps = self.eps_max - (self.eps_max - self.eps_min) * step / self.timesteps
+            # eps = self.eps_max - (self.eps_max - self.eps_min) * step / self.timesteps
+            eps = eps * 0.9995
 
             if random.random() < eps:
                 action = env.action_space.sample()
@@ -83,7 +85,7 @@ class DQNAgent:
                 loss_count += 1
 
                 if step % self.test_every == 0:
-                    mean, std = evaluate_policy(self.env_name, model, episodes=10, seed=seed)
+                    mean, std = evaluate_policy(self.env_name, model, episodes=5, seed=seed)
 
                     print(f"Episode: {episodes}, Step: {step}, Reward mean: {mean:.2f}, Reward std: {std:.2f}, Loss: {total_loss / loss_count:.4f}, Eps: {eps}")
 
