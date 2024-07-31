@@ -22,8 +22,8 @@ class EnvBase(gym.Env):
 
         self.data_pointer = 0
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        self.data = pd.read_csv(dir_path + "/data/Data_Base_Env_2021.csv")
-        self.data_length = self.data.shape[0] - 300
+        self.data = pd.read_csv(dir_path + "/data/Data_Base_Env_2021_train.csv")
+        self.data_length = self.data.shape[0] - 1
         self.total_demand = self.data["Total Demand [kW]"]
         self.pv_gen = self.data["PV Gen [kW]"]
         self.day_ahead_price = self.data["Day-ahead Price [EUR/kWh]"]
@@ -73,6 +73,44 @@ class EnvBase(gym.Env):
         pass
 
 
+class EnvTest(EnvBase):
+    def __init__(self):
+        super().__init__()
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        self.data = pd.read_csv(dir_path + "/data/Data_Base_Env_2021_test.csv")
+        self.data_length = self.data.shape[0] - 1
+        self.total_demand = self.data["Total Demand [kW]"]
+        self.pv_gen = self.data["PV Gen [kW]"]
+        self.day_ahead_price = self.data["Day-ahead Price [EUR/kWh]"]
+
+    def step(self, action):
+        self.data_pointer += 1
+        done = self.data_pointer == self.data_length
+
+        action = self.actions[action]
+
+        old_soc = self.soc
+        actual_action = self.calculate_new_soc(action)
+
+        reward = self.calculate_reward(old_soc)
+
+        grid_demand = -self.total_demand[self.data_pointer] - self.pv_gen[self.data_pointer]
+        info = {"grid_demand": grid_demand, "action": action, "actual_action": actual_action}
+
+        return np.asarray([self.total_demand[self.data_pointer], self.day_ahead_price[self.data_pointer], self.soc]), reward, done, False, info
+
+    def calculate_new_soc(self, action):
+        if action < 0.:
+            if self.soc + action < self.min_capacity:
+                action = self.soc
+            self.soc = max((self.soc + action), self.min_capacity)
+        elif action > 0.:
+            if self.soc + action > self.max_capacity:
+                action = self.max_capacity - self.soc
+            self.soc = min((self.soc + action), self.max_capacity)
+        return action
+
+
 class EnvTimestamp(EnvBase):
     def __init__(self):
         super().__init__()
@@ -95,58 +133,5 @@ class EnvTimestamp(EnvBase):
 
     def reset(self, seed=None, options=None):
         self.data_pointer = 0
-        self.soc = 1.
+        self.soc = random.uniform(0.0, 1.0)
         return np.asarray([self.total_demand[self.data_pointer], self.day_ahead_price[self.data_pointer], self.soc, self.timestamp[self.data_pointer]]), {}
-
-
-class EnvRadiation(EnvBase):
-    def __init__(self):
-        super().__init__()
-        self.timestamp = self.data["Radiation"]
-
-    def step(self, action):
-        self.data_pointer += 1
-        done = self.data_pointer == self.data_length
-
-        action = self.actions[action]
-
-        old_soc = self.soc
-        self.calculate_new_soc(action)
-
-        reward = self.calculate_reward(old_soc)
-
-        info = {}
-
-        return np.asarray([self.total_demand[self.data_pointer], self.day_ahead_price[self.data_pointer], self.soc, self.radiation[self.data_pointer]]), reward, done, False, info
-
-    def reset(self, seed=None, options=None):
-        self.data_pointer = 0
-        self.soc = 1.
-        return np.asarray([self.total_demand[self.data_pointer], self.day_ahead_price[self.data_pointer], self.soc, self.radiation[self.data_pointer]]), {}
-
-
-class EnvTimestampRadiation(EnvBase):
-    def __init__(self):
-        super().__init__()
-        self.timestamp = self.data["Timestamp"]
-        self.radiation = self.data["Radiation"]
-
-    def step(self, action):
-        self.data_pointer += 1
-        done = self.data_pointer == self.data_length
-
-        action = self.actions[action]
-
-        old_soc = self.soc
-        self.calculate_new_soc(action)
-
-        reward = self.calculate_reward(old_soc)
-
-        info = {}
-
-        return np.asarray([self.total_demand[self.data_pointer], self.day_ahead_price[self.data_pointer], self.soc, self.timestamp[self.data_pointer], self.radiation[self.data_pointer]]), reward, done, False, info
-
-    def reset(self, seed=None, options=None):
-        self.data_pointer = 0
-        self.soc = 1.
-        return np.asarray([self.total_demand[self.data_pointer], self.day_ahead_price[self.data_pointer], self.soc, self.timestamp[self.data_pointer], self.radiation[self.data_pointer]]), {}

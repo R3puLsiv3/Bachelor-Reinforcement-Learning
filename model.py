@@ -10,11 +10,11 @@ from torch.distributions import Normal
 class DQN:
     def __init__(self, state_size, action_size, gamma, tau, lr, double_dqn):
         self.model = nn.Sequential(
-            nn.Linear(state_size, 64),
+            nn.Linear(state_size, 128),
             nn.ReLU(),
-            nn.Linear(64, 128),
+            nn.Linear(128, 256),
             nn.ReLU(),
-            nn.Linear(128, action_size)
+            nn.Linear(256, action_size)
         ).to(device())
         self.target_model = deepcopy(self.model).to(device())
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)

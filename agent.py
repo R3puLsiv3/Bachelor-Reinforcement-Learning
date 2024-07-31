@@ -56,7 +56,7 @@ class DQNAgent:
                 state, _ = env.reset(seed=seed+episodes)
 
             # eps = self.eps_max - (self.eps_max - self.eps_min) * step / self.timesteps
-            eps = eps * 0.9995
+            eps = eps * 0.9994
 
             if random.random() < eps:
                 action = env.action_space.sample()
@@ -85,7 +85,7 @@ class DQNAgent:
                 loss_count += 1
 
                 if step % self.test_every == 0:
-                    mean, std = evaluate_policy(self.env_name, model, episodes=5, seed=seed)
+                    mean, std = evaluate_policy(self.env_name, model, episodes=1, seed=seed)
 
                     print(f"Episode: {episodes}, Step: {step}, Reward mean: {mean:.2f}, Reward std: {std:.2f}, Loss: {total_loss / loss_count:.4f}, Eps: {eps}")
 
@@ -103,7 +103,7 @@ class BaseAgent:
     def __init__(self, env_name):
         self.env_name = env_name
 
-    def train(self, seed=0):
+    def test(self, seed=0):
 
         env = gym.make(self.env_name)
 
@@ -131,7 +131,7 @@ class TestAgent:
     def __init__(self, env_name):
         self.env_name = env_name
 
-    def train(self, model, seed=0):
+    def test(self, model, seed=0):
 
         env = gym.make(self.env_name)
 
@@ -148,10 +148,10 @@ class TestAgent:
             action = model.act(state)
 
             # Use empty info for additional information
-            next_state, reward, terminated, truncated, _ = env.step(action)
+            next_state, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
 
-            data_point = {"demand": state[0], "price": state[1], "soc": state[3], "action": action, "reward": reward}
+            data_point = {"demand": state[0], "grid_demand": info["grid_demand"], "price": state[1], "soc": state[2], "action": info["action"], "reward": reward, "actual_action": info["actual_action"]}
             data.append(data_point)
 
             state = next_state

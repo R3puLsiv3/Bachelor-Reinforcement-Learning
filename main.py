@@ -2,9 +2,10 @@ import torch
 import matplotlib.pyplot as plt
 import numpy as np
 
-from agent import DQNAgent, BaseAgent, PPOAgent
+from agent import DQNAgent, BaseAgent, TestAgent, PPOAgent
 from memory import UniformMemory, PrioritizedExperienceReplayMemory
 from model import DQN, ActorCritic
+from utils import create_trends_plot
 
 
 def main():
@@ -12,9 +13,9 @@ def main():
 
     # Training parameters
     env_name = "environment:house_base"
-    timesteps = 15_000
+    timesteps = 20_000
     batch_size = 64
-    test_every = 200
+    test_every = 1_000
     eps_max = 0.5
     eps_min = 0.01
 
@@ -23,7 +24,7 @@ def main():
     model_action_size = 21
     gamma = 0.99
     tau = 0.0001
-    lr = 0.0001
+    lr = 0.00005
 
     # Memory parameters
     memory_state_size = 3
@@ -34,7 +35,7 @@ def main():
     beta = 0.4
 
     agent = BaseAgent(env_name)
-    rewards = agent.train(0)
+    rewards = agent.test(0)
     print(f"Baseline reward: {sum(rewards)}")
 
     agent = DQNAgent(env_name, timesteps, batch_size, test_every, eps_max, eps_min)
@@ -49,6 +50,19 @@ def main():
         mean_rewards.append(seed_reward)
     mean_rewards = np.array(mean_rewards)
     mean_reward, std_reward = mean_rewards.mean(axis=0), mean_rewards.std(axis=0)
+
+    # Load best performing network
+    best_model = torch.load("agent.pkl")
+    best_model.eval()
+    model = DQN(model_state_size, model_action_size, gamma, tau, lr, double_dqn=False)
+    model.model = best_model
+
+    # Run on test environment and visualize results
+    env_name = "environment:house_base_test"
+    agent = TestAgent(env_name)
+    data = agent.test(model)
+    create_trends_plot(data)
+
 
     # # Training on uniform memory with double DQN
     # torch.manual_seed(0)
@@ -83,18 +97,6 @@ def main():
     # mean_rewards = np.array(mean_rewards)
     # mean_priority_reward_double, std_priority_reward_double = mean_rewards.mean(axis=0), mean_rewards.std(axis=0)
 
-    # agent = PPOAgent(env_name)
-
-    # PPO training
-    # torch.manual_seed(0)
-    # mean_rewards = []
-    # for seed in range(n_seeds):
-    #     model = ActorCritic(model_state_size, model_action_size, lr)
-    #     seed_reward, seed_std = agent.train(seed=seed, model=model)
-    #     mean_rewards.append(seed_reward)
-    # mean_rewards = np.array(mean_rewards)
-    # mean_ppo_reward, std_ppo_reward = mean_rewards.mean(axis=0), mean_rewards.std(axis=0)
-
     steps = np.arange(mean_reward.shape[0]) * test_every
 
     plt.plot(steps, mean_reward, label="Uniform")
@@ -107,8 +109,7 @@ def main():
     # plt.fill_between(steps, mean_priority_reward_double - std_priority_reward_double, mean_priority_reward_double + std_priority_reward_double, alpha=0.4)
 
     plt.legend()
-    plt.title(env_name)
-    # plt.ylim()
+    plt.title("Learning Rate in Base Environment")
     plt.xlabel("Transitions")
     plt.ylabel("Reward")
 
