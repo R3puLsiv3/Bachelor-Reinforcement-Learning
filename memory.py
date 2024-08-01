@@ -49,13 +49,14 @@ class UniformMemory:
 
 
 class PrioritizedExperienceReplayMemory:
-    def __init__(self, state_size, action_size, memory_size, eps=1e-2, alpha=0.1, beta=0.1):
+    def __init__(self, state_size, action_size, memory_size, eps=1e-2, alpha=0.1, beta=0.1, anneal=1):
         self.tree = SumTree(size=memory_size)
 
         # PER params
         self.eps = eps  # minimal priority, prevents zero probabilities
         self.alpha = alpha  # determines how much prioritization is used, α = 0 corresponding to the uniform case
         self.beta = beta  # determines the amount of importance-sampling correction, b = 1 fully compensate for the non-uniform probabilities
+        self.anneal = anneal
         self.max_priority = eps  # priority for new samples, init as eps
 
         # transition: state, action, reward, next_state, done
@@ -122,6 +123,7 @@ class PrioritizedExperienceReplayMemory:
         # For stability reasons, we always normalize weights by 1/maxi wi so that they only scale the
         # update downwards (Section 3.4, first paragraph)
         weights = (self.real_size * probs) ** -self.beta
+        self.beta *= self.anneal
 
         # As mentioned in Section 3.4, whenever importance sampling is used, all weights w_i were scaled
         # so that max_i w_i = 1. We found that this worked better in practice as it kept all weights

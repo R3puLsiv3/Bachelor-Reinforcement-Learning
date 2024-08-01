@@ -26,13 +26,13 @@ def evaluate_policy(env_name, model, episodes=5, seed=0):
 
 
 class DQNAgent:
-    def __init__(self, env_name, timesteps=50_000, batch_size=64, test_every=5000, eps_max=0.5, eps_min=0.05):
+    def __init__(self, env_name, timesteps=50_000, batch_size=64, test_every=5000, eps_decay=0.999):
         self.env_name = env_name
         self.timesteps = timesteps
         self.batch_size = batch_size
         self.test_every = test_every
-        self.eps_max = eps_max
-        self.eps_min = eps_min
+        self.eps_decay = eps_decay
+        self.best_reward = -np.inf
 
     def train(self, model, memory, seed=0):
         print(f"Training on: {self.env_name}, Device: {device()}, Seed: {seed}")
@@ -43,7 +43,6 @@ class DQNAgent:
         loss_count, total_loss = 0, 0
 
         episodes = 0
-        best_reward = -np.inf
         eps = 1
 
         done = False
@@ -55,8 +54,7 @@ class DQNAgent:
                 episodes += 1
                 state, _ = env.reset(seed=seed+episodes)
 
-            # eps = self.eps_max - (self.eps_max - self.eps_min) * step / self.timesteps
-            eps = eps * 0.9994
+            eps = eps * self.eps_decay
 
             if random.random() < eps:
                 action = env.action_space.sample()
@@ -89,8 +87,8 @@ class DQNAgent:
 
                     print(f"Episode: {episodes}, Step: {step}, Reward mean: {mean:.2f}, Reward std: {std:.2f}, Loss: {total_loss / loss_count:.4f}, Eps: {eps}")
 
-                    if mean > best_reward:
-                        best_reward = mean
+                    if mean > self.best_reward:
+                        self.best_reward = mean
                         model.save()
 
                     rewards_total.append(mean)
