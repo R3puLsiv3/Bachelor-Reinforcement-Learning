@@ -1,6 +1,8 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import os
 
 from copy import deepcopy
 from utils import device
@@ -12,9 +14,9 @@ class DQN:
         self.model = nn.Sequential(
             nn.Linear(state_size, 128),
             nn.ReLU(),
-            nn.Linear(128, 256),
+            nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(256, action_size)
+            nn.Linear(128, action_size)
         ).to(device())
         self.target_model = deepcopy(self.model).to(device())
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
@@ -66,14 +68,36 @@ class DQN:
 
         return loss.item(), td_error
 
-    def save(self):
-        torch.save(self.model, "agent.pkl")
+    def save(self, name):
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        torch.save(self.model, f"{dir_path}/models/{name}.pkl")
 
 
 def init_weights(m):
     if isinstance(m, nn.Linear):
         nn.init.normal_(m.weight, mean=0., std=0.1)
         nn.init.constant_(m.bias, 0.1)
+
+# Adapted from https://github.com/anubhavshrimal/Reinforcement-Learning/blob/master/RL-in-Continuous-Space/Discretization.ipynb
+class QTable:
+    def __init__(self, action_size):
+        self.state_grid = self.create_uniform_grid([-25.87, -0.0631, 0.0], [32.19, 0.4429, 1.0], bins=(10, 10, 10))
+        self.state_size = tuple(len(splits) + 1 for splits in self.state_grid)
+        self.action_size = action_size
+
+        self.q_table = np.zeros(shape=(self.state_size + (self.action_size,)))
+
+    def preprocess_state(self, state):
+        discretized_state = []
+        for s, g in zip(state, self.state_grid):
+            discretized_state.append(np.digitize(s, g))
+        return tuple(discretized_state)
+
+    def create_uniform_grid(self, low, high, bins):
+        grids = []
+        for l, h, n in zip(low, high, bins):
+            grids.append(np.linspace(l, h, num=n, endpoint=False)[1:])
+        return grids
 
 
 class ActorCritic(nn.Module):

@@ -76,7 +76,7 @@ def create_trends_plot(data, method="uni_dqn"):
     plt.show()
 
 
-def create_learning_plot(test_every, mean_reward=None, std_reward=None,
+def create_learning_plot(test_every, mode, mean_reward=None, std_reward=None,
                             mean_reward_double=None, std_reward_double=None,
                             mean_priority_reward=None, std_priority_reward=None,
                             mean_priority_reward_double=None, std_priority_reward_double=None):
@@ -103,19 +103,22 @@ def create_learning_plot(test_every, mean_reward=None, std_reward=None,
     plt.ylabel("Reward")
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    plt.savefig(dir_path + "/plots/learning_progress.pdf", dpi=200, bbox_inches='tight')
+    if mode == "train":
+        plt.savefig(dir_path + "/plots/training_progress.pdf", dpi=200, bbox_inches='tight')
+    if mode == "test":
+        plt.savefig(dir_path + "/plots/testing_progress.pdf", dpi=200, bbox_inches='tight')
     plt.show()
 
 
 def create_cost_plot(rewards, baseline_rewards, method="uni_dqn"):
     x = np.arange(0, len(rewards))
-    y1 = np.cumsum(abs(rewards))
-    y2 = np.cumsum(abs(baseline_rewards))
+    y1 = np.cumsum(np.abs(rewards))
+    y2 = np.cumsum(np.abs(baseline_rewards))
 
     plt.plot(x, y1, label="Test")
-    plt.fill_between(x, y1, y2)
+    plt.fill_between(x, y1)
     plt.plot(x, y2, label="Baseline")
-    plt.fill_between(x, y2)
+    plt.fill_between(x, y2, y1)
 
     plt.legend()
     plt.title("Cost Comparison")

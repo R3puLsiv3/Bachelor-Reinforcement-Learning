@@ -22,7 +22,7 @@ def evaluate_policy(env_name, model, episodes=5, seed=0):
             done = terminated or truncated
             total_reward += reward
         returns.append(total_reward)
-    return np.mean(returns), np.std(returns)
+    return np.mean(returns)
 
 
 class DQNAgent:
@@ -39,7 +39,7 @@ class DQNAgent:
 
         env = gym.make(self.env_name)
 
-        rewards_total, stds_total = [], []
+        rewards_total, rewards_test_total = [], []
         loss_count, total_loss = 0, 0
 
         episodes = 0
@@ -54,7 +54,7 @@ class DQNAgent:
                 episodes += 1
                 state, _ = env.reset(seed=seed+episodes)
 
-            eps = eps * self.eps_decay
+            eps *= self.eps_decay
 
             if random.random() < eps:
                 action = env.action_space.sample()
@@ -83,18 +83,19 @@ class DQNAgent:
                 loss_count += 1
 
                 if step % self.test_every == 0:
-                    mean, std = evaluate_policy(self.env_name, model, episodes=1, seed=seed)
-
-                    print(f"Episode: {episodes}, Step: {step}, Reward mean: {mean:.2f}, Reward std: {std:.2f}, Loss: {total_loss / loss_count:.4f}, Eps: {eps}")
+                    mean = evaluate_policy(self.env_name, model, episodes=1, seed=seed)
 
                     if mean > self.best_reward:
                         self.best_reward = mean
-                        model.save()
+                        model.save("current_best_model")
 
                     rewards_total.append(mean)
-                    stds_total.append(std)
+                    mean_test = evaluate_policy("environment:house_base_test", model, episodes=1, seed=seed)
+                    rewards_test_total.append(mean_test)
 
-        return np.array(rewards_total), np.array(stds_total)
+                    print(f"Episode: {episodes}, Step: {step}, Reward mean: {mean:.2f}, Reward test mean: {mean_test:.2f}, Loss: {total_loss / loss_count:.4f}, Eps: {eps}")
+
+        return np.array(rewards_total), np.array(rewards_test_total)
 
 
 class BaseAgent:
@@ -155,6 +156,81 @@ class TestAgent:
             state = next_state
 
         return data
+
+
+def evaluate_policy_q_learning(env_name, q_table, episodes=5, seed=0):
+    env = gym.make(env_name)
+    set_seed(env, seed=seed)
+
+    returns = []
+    for ep in range(episodes):
+        done, total_reward = False, 0
+        state, _ = env.reset(seed=seed + ep)
+        state = q_table.preprocess_state(state)
+
+        while not done:
+            state, reward, terminated, truncated, _ = env.step(np.argmax(q_table.q_table[state]))
+            state = q_table.preprocess_state(state)
+            done = terminated or truncated
+            total_reward += reward
+        returns.append(total_reward)
+    return np.mean(returns)
+
+
+class QLearningAgent:
+    def __init__(self, env_name, timesteps, test_every, eps_decay, alpha, gamma):
+        self.env_name = env_name
+        self.timesteps = timesteps
+        self.test_every = test_every
+        self.eps_decay = eps_decay
+        self.alpha = alpha
+        self.gamma = gamma
+
+    def train(self, q_table, seed):
+        env = gym.make(self.env_name)
+
+        rewards_total, rewards_test_total = [], []
+
+        episodes = 0
+        eps = 1
+
+        done = False
+        state, _ = env.reset(seed=seed)
+        state = q_table.preprocess_state(state)
+
+        for step in range(1, self.timesteps + 1):
+            if done:
+                done = False
+                episodes += 1
+                state, _ = env.reset(seed=seed + episodes)
+                state = q_table.preprocess_state(state)
+
+            eps *= self.eps_decay
+
+            if random.random() < eps:
+                action = env.action_space.sample()
+            else:
+                action = np.argmax(q_table.q_table[state])
+
+
+            next_state, reward, terminated, truncated, _ = env.step(action)
+            done = terminated or truncated
+            next_state = q_table.preprocess_state(next_state)
+
+            q_table.q_table[state][action] += self.alpha * (float(reward) + self.gamma * max(q_table.q_table[next_state]) - q_table.q_table[state][action])
+
+            state = next_state
+
+            if step % self.test_every == 0:
+                mean = evaluate_policy_q_learning(self.env_name, q_table, episodes=1, seed=seed)
+                rewards_total.append(mean)
+                mean_test = evaluate_policy_q_learning("environment:house_base_test", q_table, episodes=1, seed=seed)
+                rewards_test_total.append(mean_test)
+
+                print(
+                    f"Episode: {episodes}, Step: {step}, Reward mean: {mean:.2f}, Reward test mean: {mean_test:.2f}, Eps: {eps}")
+
+        return np.array(rewards_total), np.array(rewards_test_total)
 
 
 def compute_gae(next_value, rewards, masks, values, gamma=0.99, tau=0.95):
