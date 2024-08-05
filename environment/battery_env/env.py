@@ -95,7 +95,7 @@ class EnvTest(EnvBase):
         reward = self.calculate_reward(old_soc)
 
         grid_demand = -self.total_demand[self.data_pointer] - self.pv_gen[self.data_pointer]
-        info = {"grid_demand": grid_demand, "action": action, "actual_action": actual_action}
+        info = {"pv_gen": self.pv_gen[self.data_pointer], "grid_demand": grid_demand, "action": action, "actual_action": actual_action}
 
         return np.asarray([self.total_demand[self.data_pointer], self.day_ahead_price[self.data_pointer], self.soc]), reward, done, False, info
 

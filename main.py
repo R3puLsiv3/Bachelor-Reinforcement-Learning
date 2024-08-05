@@ -35,15 +35,36 @@ def main():
     beta = 0.4
     anneal = 1.0000456
 
-    # Q-Learning
-    q_table = QTable(model_action_size)
-    agent = QLearningAgent(env_name, 50_000_000, 500_000, 0.9999999, 0.0001, 0.99)
-    agent.train(q_table, seed=0)
+    # Q-Learning parameters
+    q_timesteps = 5_000_000
+    q_test_every = 100_000
+    q_eps_decay = 0.9999995
+    q_alpha = 0.01
+    q_alpha_decay = 0.99999
+    q_gamma = 0.99
 
     agent = BaseAgent(env_name)
     rewards = agent.test(0)
     dir_path = os.path.dirname(os.path.realpath(__file__))
     print(f"Baseline reward: {sum(rewards)}")
+
+    # # Q-Learning
+    # mean_rewards = []
+    # mean_test_rewards = []
+    # for seed in range(n_seeds):
+    #     q_table = QTable(model_action_size)
+    #     agent = QLearningAgent(env_name, q_timesteps, q_test_every, q_eps_decay, q_alpha, q_alpha_decay, q_gamma)
+    #     seed_reward, seed_test_reward = agent.train(q_table, seed=0)
+    #     mean_rewards.append(seed_reward)
+    #     mean_test_rewards.append(seed_test_reward)
+    # mean_rewards = np.array(mean_rewards)
+    # mean_test_rewards = np.array(mean_test_rewards)
+    # mean_reward, std_reward = mean_rewards.mean(axis=0), mean_rewards.std(axis=0)
+    # mean_test_reward, std_test_reward = mean_test_rewards.mean(axis=0), mean_test_rewards.std(axis=0)
+    #
+    # create_learning_plot(q_test_every, "train", mean_reward=mean_reward, std_reward=std_reward)
+    #
+    # create_learning_plot(q_test_every, "test", mean_reward=mean_test_reward, std_reward=std_test_reward)
 
     agent = DQNAgent(env_name, timesteps, batch_size, test_every, eps_decay)
     test_agent = TestAgent(test_env_name)

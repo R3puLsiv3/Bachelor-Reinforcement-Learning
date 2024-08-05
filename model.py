@@ -78,10 +78,11 @@ def init_weights(m):
         nn.init.normal_(m.weight, mean=0., std=0.1)
         nn.init.constant_(m.bias, 0.1)
 
+
 # Adapted from https://github.com/anubhavshrimal/Reinforcement-Learning/blob/master/RL-in-Continuous-Space/Discretization.ipynb
 class QTable:
     def __init__(self, action_size):
-        self.state_grid = self.create_uniform_grid([-25.87, -0.0631, 0.0], [32.19, 0.4429, 1.0], bins=(10, 10, 10))
+        self.state_grid = self.create_uniform_grid([-25.87, -0.0631, 0.0], [32.19, 0.4429, 1.0], bins=(50, 50, 50))
         self.state_size = tuple(len(splits) + 1 for splits in self.state_grid)
         self.action_size = action_size
 

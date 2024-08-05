@@ -150,7 +150,7 @@ class TestAgent:
             next_state, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
 
-            data_point = {"demand": state[0], "grid_demand": info["grid_demand"], "price": state[1], "soc": state[2], "action": info["action"], "reward": reward, "actual_action": info["actual_action"]}
+            data_point = {"pv_gen": info["pv_gen"], "grid_demand": info["grid_demand"], "price": state[1], "soc": state[2], "action": info["action"], "reward": reward, "actual_action": info["actual_action"]}
             data.append(data_point)
 
             state = next_state
@@ -178,12 +178,13 @@ def evaluate_policy_q_learning(env_name, q_table, episodes=5, seed=0):
 
 
 class QLearningAgent:
-    def __init__(self, env_name, timesteps, test_every, eps_decay, alpha, gamma):
+    def __init__(self, env_name, timesteps, test_every, eps_decay, alpha, alpha_decay, gamma):
         self.env_name = env_name
         self.timesteps = timesteps
         self.test_every = test_every
         self.eps_decay = eps_decay
         self.alpha = alpha
+        self.alpha_decay = alpha_decay
         self.gamma = gamma
 
     def train(self, q_table, seed):
@@ -217,8 +218,9 @@ class QLearningAgent:
             done = terminated or truncated
             next_state = q_table.preprocess_state(next_state)
 
-            q_table.q_table[state][action] += self.alpha * (float(reward) + self.gamma * max(q_table.q_table[next_state]) - q_table.q_table[state][action])
+            q_table.q_table[state][action] += self.alpha * (reward + self.gamma * max(q_table.q_table[next_state]) - q_table.q_table[state][action])
 
+            self.alpha *= 0.99999
             state = next_state
 
             if step % self.test_every == 0:

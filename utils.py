@@ -18,7 +18,7 @@ def device(force_cpu=True):
 
 
 def create_trends_plot(data, method="uni_dqn"):
-    demand = []
+    pv_gen = []
     grid_demand = []
     price = []
     soc = []
@@ -29,7 +29,7 @@ def create_trends_plot(data, method="uni_dqn"):
     hours_per_week = 168
 
     for data_point in data[:hours_per_week]:
-        demand.append(data_point["demand"])
+        pv_gen.append(data_point["pv_gen"])
         grid_demand.append(data_point["grid_demand"])
         price.append(data_point["price"])
         soc.append(data_point["soc"])
@@ -41,8 +41,8 @@ def create_trends_plot(data, method="uni_dqn"):
 
     fig, [ax0, ax1, ax2, ax3, ax4, ax5, ax6] = plt.subplots(nrows=7, ncols=1, figsize=(8, 21), tight_layout=True, sharex=True)
 
-    ax0.plot(x, demand)
-    ax0.set_title("Total Demand")
+    ax0.plot(x, pv_gen)
+    ax0.set_title("PV Generation")
     ax0.set_ylabel("kW")
     ax1.plot(x, grid_demand)
     ax1.set_title("Grid Demand")
@@ -123,7 +123,7 @@ def create_cost_plot(rewards, baseline_rewards, method="uni_dqn"):
     plt.legend()
     plt.title("Cost Comparison")
     plt.xlabel("Steps")
-    plt.ylabel("Cumulative Reward")
+    plt.ylabel("Cumulative Cost")
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
     match method:
