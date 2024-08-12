@@ -6,7 +6,6 @@ import os
 
 from copy import deepcopy
 from utils import device
-from torch.distributions import Normal
 
 
 class DQN:
@@ -99,36 +98,3 @@ class QTable:
         for l, h, n in zip(low, high, bins):
             grids.append(np.linspace(l, h, num=n, endpoint=False)[1:])
         return grids
-
-
-class ActorCritic(nn.Module):
-    def __init__(self, state_size, action_size, lr, std=0.0):
-        super(ActorCritic, self).__init__()
-
-        self.critic = nn.Sequential(
-            nn.Linear(state_size, 32),
-            nn.ReLU(),
-            nn.Linear(32, 32),
-            nn.ReLU(),
-            nn.Linear(32, action_size)
-        ).to(device())
-
-        self.actor = nn.Sequential(
-            nn.Linear(state_size, 32),
-            nn.ReLU(),
-            nn.Linear(32, 32),
-            nn.ReLU(),
-            nn.Linear(32, action_size)
-        ).to(device())
-
-        self.optimizer = optim.Adam(self.parameters(), lr=lr)
-        self.log_std = nn.Parameter(torch.ones(1, action_size) * std)
-
-        self.apply(init_weights)
-
-    def forward(self, x):
-        value = self.critic(x)
-        mu = self.actor(x)
-        std = self.log_std.exp().expand_as(mu)
-        dist = Normal(mu, std)
-        return dist, value

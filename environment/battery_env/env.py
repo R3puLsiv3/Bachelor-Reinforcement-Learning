@@ -111,6 +111,7 @@ class EnvTest(EnvBase):
         return action
 
 
+# Can be used with properly formatted timestamp data for future research.
 class EnvTimestamp(EnvBase):
     def __init__(self):
         super().__init__()

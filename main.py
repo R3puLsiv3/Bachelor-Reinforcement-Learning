@@ -14,17 +14,17 @@ def main():
     # Training parameters
     env_name = "environment:house_base"
     test_env_name = "environment:house_base_test"
-    timesteps = 20_000
+    timesteps = 100_000
     batch_size = 64
-    test_every = 500
-    eps_decay = 0.9997
+    test_every = 5_000
+    eps_decay = 0.99993
 
     # Model parameters
     model_state_size = 3
     model_action_size = 21
     gamma = 0.99
     tau = 0.0001
-    lr = 0.00001
+    lr = 0.000005
 
     # Memory parameters
     memory_state_size = 3
@@ -33,7 +33,7 @@ def main():
     eps = 1e-2
     alpha = 0.6
     beta = 0.4
-    anneal = 1.0000456
+    anneal = 1.00000915
 
     # Q-Learning parameters
     q_timesteps = 5_000_000

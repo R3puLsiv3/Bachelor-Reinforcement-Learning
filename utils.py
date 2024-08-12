@@ -1,6 +1,7 @@
 import os
 import torch
 import random
+import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -74,6 +75,7 @@ def create_trends_plot(data, method="uni_dqn"):
         case "prio_ddqn":
             plt.savefig(dir_path + "/plots/trends_prio_ddqn.pdf", dpi=200, bbox_inches='tight')
     plt.show()
+    create_soc_comparison(soc, method)
 
 
 def create_learning_plot(test_every, mode, mean_reward=None, std_reward=None,
@@ -135,4 +137,31 @@ def create_cost_plot(rewards, baseline_rewards, method="uni_dqn"):
             plt.savefig(dir_path + "/plots/cost_comparison_prio_dqn.pdf", dpi=200, bbox_inches='tight')
         case "prio_ddqn":
             plt.savefig(dir_path + "/plots/cost_comparison_prio_ddqn.pdf", dpi=200, bbox_inches='tight')
+    plt.show()
+
+
+def create_soc_comparison(soc, method):
+    x = np.arange(0, len(soc))
+
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    y1 = soc
+    y2 = pd.read_csv(dir_path + "/data/SoC_first_week_october_2021.csv")["SOC"]
+
+    plt.plot(x, y1, label="Agent")
+    plt.plot(x, y2, label="Data")
+
+    plt.legend()
+    plt.title("SoC Comparison")
+    plt.xlabel("Steps")
+    plt.ylabel("State of Charge")
+
+    match method:
+        case "uni_dqn":
+            plt.savefig(dir_path + "/plots/SoC_comparison_uni_dqn.pdf", dpi=200, bbox_inches='tight')
+        case "uni_ddqn":
+            plt.savefig(dir_path + "/plots/SoC_comparison_uni_ddqn.pdf", dpi=200, bbox_inches='tight')
+        case "prio_dqn":
+            plt.savefig(dir_path + "/plots/SoC_comparison_prio_dqn.pdf", dpi=200, bbox_inches='tight')
+        case "prio_ddqn":
+            plt.savefig(dir_path + "/plots/SoC_comparison_prio_ddqn.pdf", dpi=200, bbox_inches='tight')
     plt.show()
