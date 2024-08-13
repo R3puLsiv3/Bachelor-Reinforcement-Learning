@@ -8,3 +8,5 @@ The five reinforcement learning agents are:
 - Double DQN
 - Prioritized Experience Replay DQN
 - Prioritized Experience Replay Double DQN
+
+Code for prioritized experience replay DQN is adapted from https://github.com/Howuhh/prioritized_experience_replay
